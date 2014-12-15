@@ -246,7 +246,7 @@ OBJ += $(BUILD)/pins_$(BOARD).o
 $(BUILD)/$(FATFS_DIR)/src/ff.o: COPT += -Os
 $(BUILD)/$(HAL_DIR)/src/stm32f4xx_hal_sd.o: COPT += -Os
 
-all: $(BUILD)/firmware.dfu $(BUILD)/firmware.hex
+all: $(BUILD)/firmware.dfu $(BUILD)/firmware.hex $(BUILD)/firmware.bin
 
 .PHONY: deploy
 
@@ -272,6 +272,10 @@ $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) $@
+
+$(BUILD)/firmware.bin: $(BUILD)/firmware.elf
+	$(ECHO) "Create $@"
+	$(Q)$(OBJCOPY) $< -O binary --pad-to 0 $@
 
 MAKE_PINS = boards/make-pins.py
 BOARD_PINS = boards/$(BOARD)/pins.csv
