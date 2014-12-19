@@ -1,4 +1,4 @@
-#define CRZYFLYV2_1
+#define CRAZYFLIE2
 
 #define MICROPY_HW_BOARD_NAME       "Crazyflie 2.0 Rev.C"
 #define MICROPY_HW_MCU_NAME         "STM32F405RG"
