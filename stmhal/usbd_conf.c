@@ -340,7 +340,7 @@ USBD_StatusTypeDef  USBD_LL_Init (USBD_HandleTypeDef *pdev)
   hpcd.Init.phy_itface = PCD_PHY_EMBEDDED; 
   hpcd.Init.Sof_enable = 0;
   hpcd.Init.speed = PCD_SPEED_FULL;
-#if defined(HYDRABUSV10)
+#if defined(HYDRABUSV10) | defined(CRAZYFLIE2)
   hpcd.Init.vbus_sensing_enable = 0; /* No VBUS Sensing on USB0 for HydraBus (VBUS is not connected on GPIOA9) */
 #else
   hpcd.Init.vbus_sensing_enable = 1;
