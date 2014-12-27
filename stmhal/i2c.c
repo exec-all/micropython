@@ -95,6 +95,9 @@
 I2C_HandleTypeDef I2CHandle1 = {.Instance = NULL};
 #endif
 I2C_HandleTypeDef I2CHandle2 = {.Instance = NULL};
+#if MICROPY_HW_ENABLE_I2C3
+I2C_HandleTypeDef I2CHandle3 = {.Instance = NULL};
+#endif
 
 void i2c_init0(void) {
     // reset the I2C1 handles
@@ -104,6 +107,10 @@ void i2c_init0(void) {
 #endif
     memset(&I2CHandle2, 0, sizeof(I2C_HandleTypeDef));
     I2CHandle2.Instance = I2C2;
+#if MICROPY_HW_ENABLE_I2C3
+    memset(&I2CHandle3, 0, sizeof(I2C_HandleTypeDef));
+    I2CHandle3.Instance = I2C3;
+#endif
 }
 
 void i2c_init(I2C_HandleTypeDef *i2c) {
@@ -131,6 +138,15 @@ void i2c_init(I2C_HandleTypeDef *i2c) {
         GPIO_InitStructure.Alternate = GPIO_AF4_I2C2;
         // enable the I2C clock
         __I2C2_CLK_ENABLE();
+#if MICROPY_HW_ENABLE_I2C3
+    } else if (i2c == &I2CHandle3) {
+        // X-skin: X9=PB6=SCL, X10=PB7=SDA
+        pins[0] = &pin_A8;
+        pins[1] = &pin_C9;
+        GPIO_InitStructure.Alternate = GPIO_AF4_I2C3;
+        // enable the I2C clock
+        __I2C3_CLK_ENABLE();
+#endif
     } else {
         // I2C does not exist for this board (shouldn't get here, should be checked by caller)
         return;
@@ -165,6 +181,12 @@ void i2c_deinit(I2C_HandleTypeDef *i2c) {
         __I2C2_FORCE_RESET();
         __I2C2_RELEASE_RESET();
         __I2C2_CLK_DISABLE();
+#if MICROPY_HW_ENABLE_I2C3
+    } else if (i2c->Instance == I2C3) {
+        __I2C3_FORCE_RESET();
+        __I2C3_RELEASE_RESET();
+        __I2C3_CLK_DISABLE();
+#endif
     }
 }
 
@@ -184,7 +206,12 @@ STATIC const pyb_i2c_obj_t pyb_i2c_obj[] = {
 #else
     {{&pyb_i2c_type}, NULL},
 #endif
-    {{&pyb_i2c_type}, &I2CHandle2}
+    {{&pyb_i2c_type}, &I2CHandle2},
+#if MICROPY_HW_ENABLE_I2C3
+    {{&pyb_i2c_type}, &I2CHandle3},
+#else
+    {{&pyb_i2c_type}, NULL},
+#endif
 };
 
 STATIC void pyb_i2c_print(void (*print)(void *env, const char *fmt, ...), void *env, mp_obj_t self_in, mp_print_kind_t kind) {
@@ -192,7 +219,8 @@ STATIC void pyb_i2c_print(void (*print)(void *env, const char *fmt, ...), void *
 
     uint i2c_num;
     if (self->i2c->Instance == I2C1) { i2c_num = 1; }
-    else { i2c_num = 2; }
+    else if (self->i2c->Instance == I2C2) { i2c_num = 2; }
+    else { i2c_num = 3; }
 
     if (self->i2c->State == HAL_I2C_STATE_RESET) {
         print(env, "I2C(%u)", i2c_num);
@@ -262,6 +290,7 @@ STATIC mp_obj_t pyb_i2c_init_helper(const pyb_i2c_obj_t *self, mp_uint_t n_args,
 ///
 ///   - `I2C(1)` is on the X position: `(SCL, SDA) = (X9, X10) = (PB6, PB7)`
 ///   - `I2C(2)` is on the Y position: `(SCL, SDA) = (Y9, Y10) = (PB10, PB11)`
+///   - `I2C(3)` is on the Y position: `(SCL, SDA) = (       ) = (PA8, PC9)`
 STATIC mp_obj_t pyb_i2c_make_new(mp_obj_t type_in, mp_uint_t n_args, mp_uint_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 1, MP_OBJ_FUN_ARGS_MAX, true);
